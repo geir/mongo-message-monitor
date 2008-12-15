@@ -1,1 +1,10 @@
 Proxy/Monitor for MongoDB Wire Traffic
+
+Mongo Message Monitor (mmm) is a simple proxy program that 
+acts as a proxy between a MongoDB client and the MongoDB 
+server itself.
+
+It allows you to watch and report on the communication traffic
+between a client and the server.
+
+
