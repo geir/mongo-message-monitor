@@ -20,7 +20,16 @@
     </target>
     
     <target name="compile" depends="clean, init">
-        <javac srcdir="${srcdir}" destdir="${classdir}" />
+        <javac srcdir="${srcdir}" destdir="${classdir}">
+            <classpath>
+                <path>
+                    <pathelement location="${classdir}/"/>
+                    <fileset dir="lib">
+                        <include name="**/*.jar"/>
+                    </fileset>
+                </path>
+            </classpath>
+        </javac>
     </target>
 
     <target name="compile_tests" depends="compile">
@@ -38,8 +47,8 @@
         </javac>
     </target>
 
-    <target name="jar" depends="compile" description="Builds a complete driver jar.">
-        <jar destfile="mongo-driver.jar" basedir="${classdir}"/>
+    <target name="jar" depends="compile" description="Builds a mmm jar.">
+        <jar destfile="mongo-message-monitor.jar" basedir="${classdir}"/>
     </target>
 
     <target name="doc" depends="javadoc" description="Generates javadoc into target/api"/>
