@@ -19,6 +19,8 @@
 
 package org.mongodb.mmm;
 
+import org.mongodb.mmm.processor.MessageLogger;
+
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.InetSocketAddress;
@@ -42,14 +44,14 @@ public class Monitor {
 
             _listenSock.bind(new InetSocketAddress(port));
 
-            System.out.println("Listening on " + port);
+            System.out.println("MMM : Listening on " + port);
 
             while(_running) {
 
                 Socket s = _listenSock.accept();
 
-                System.out.println("Received connection : " + s);
-                MongoProxy mp = new MongoProxy(s);
+                System.out.println("MMM: Received connection : " + s);
+                MongoProxy mp = new MongoProxy(s, new MessageLogger(false, System.out));
 
                 Thread t = new Thread(mp);
 

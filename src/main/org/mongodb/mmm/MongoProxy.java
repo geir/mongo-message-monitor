@@ -44,13 +44,14 @@ public class MongoProxy implements Runnable {
     protected boolean _running = true;
     protected final int _myID = id.getAndIncrement();
 
-    protected DBConnection _sr;
+    protected DBConnection _dbConnection;
     protected Thread _serverThread;
 
     protected MessageProcessor _processor = new NOOPProcessor();
 
-    public MongoProxy(Socket client) {
+    public MongoProxy(Socket client, MessageProcessor mp) {
         _clientSocket = client;
+        _processor = mp;
     }
 
     public void run() {
@@ -78,10 +79,12 @@ public class MongoProxy implements Runnable {
 
         shutdownServer();
         shutdownClient();
+
+        log("MessageProxy thread ending.");
     }
 
     protected void shutdownServer() {
-        _sr.shutdown();
+        _dbConnection.shutdown();
     }
 
     protected void shutdownClient() {
@@ -103,7 +106,7 @@ public class MongoProxy implements Runnable {
 
                 processMessage(MessageProcessor.Direction.FromClient, msg);
 
-                _sr.writeToServer(msg);
+                _dbConnection.writeToServer(msg);
             }
         }
         catch(IOException e) {
@@ -116,7 +119,7 @@ public class MongoProxy implements Runnable {
     }
 
     private void createServerConnection() throws IOException {
-        _sr = new DBConnection(this, _clientSocket, _processor);
+        _dbConnection = new DBConnection(this, _clientSocket, _processor);
     }
 
     private void log(String s, Throwable e) {

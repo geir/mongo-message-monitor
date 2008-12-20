@@ -22,13 +22,21 @@ package org.mongodb.mmm.processor;
 import org.mongodb.driver.impl.msg.DBMessage;
 
 import java.io.IOException;
+import java.io.PrintStream;
 
 /**
- *
+ *  MessageProcessor that just logs to a <code>PrintStream</code>
  */
 public class MessageLogger implements MessageProcessor {
 
     protected boolean _logHex = false;
+
+    protected final PrintStream _ps;
+
+    public MessageLogger(boolean logHexdump, PrintStream ps) {
+        _logHex = logHexdump;
+        _ps = ps;
+    }
     
     public void process(int id, int seqNum, Direction dir, DBMessage message) {
 
@@ -53,6 +61,6 @@ public class MessageLogger implements MessageProcessor {
 
         String dirStr = (dir == Direction.FromClient) ? "->" : "<-";
 
-        System.out.println(id + ":" + seqNum + ":" + dirStr + ":" + msg);
+        _ps.println(id + ":" + seqNum + ":" + dirStr + ":" + msg);
     }
 }
