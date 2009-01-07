@@ -1,0 +1,5 @@
+#!/bin/sh
+
+export CLASSPATH=mongo-message-monitor.jar:lib/mongo-driver.jar
+
+java org.mongodb.mmm.Monitor
