@@ -20,7 +20,6 @@
 package org.mongodb.mmm;
 
 import org.mongodb.mmm.processor.MessageLogger;
-import org.mongodb.mmm.processor.NOOPProcessor;
 
 import java.net.InetSocketAddress;
 import java.io.IOException;
@@ -51,8 +50,7 @@ public class Monitor {
                 SocketChannel s = listenSock.accept();
 
                 System.out.println("MMM: Received connection : " + s);
-//                MongoProxy mp = new MongoProxy(s, new MessageLogger(false, System.out));
-                MongoProxy mp = new MongoProxy(s, new NOOPProcessor());
+                MongoProxy mp = new MongoProxy(s, new MessageLogger(false, System.out));
 
                 Thread t = new Thread(mp);
 
