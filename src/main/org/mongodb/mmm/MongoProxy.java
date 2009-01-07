@@ -25,10 +25,11 @@ import org.mongodb.driver.MongoDBIOException;
 import org.mongodb.mmm.processor.MessageProcessor;
 import org.mongodb.mmm.processor.NOOPProcessor;
 
-import java.net.Socket;
 import java.io.IOException;
-import java.io.BufferedInputStream;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.nio.channels.SocketChannel;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
 /**
  *  Handles a client connection
@@ -39,27 +40,25 @@ public class MongoProxy implements Runnable {
 
     protected final AtomicInteger count = new AtomicInteger();
 
-    protected final Socket _clientSocket;
-    protected Socket _dbSocket;
+    protected final SocketChannel _clientSocket;
     protected boolean _running = true;
     protected final int _myID = id.getAndIncrement();
 
-    protected DBConnection _dbConnection;
-    protected Thread _serverThread;
-
     protected MessageProcessor _processor = new NOOPProcessor();
 
-    public MongoProxy(Socket client, MessageProcessor mp) {
+    public MongoProxy(SocketChannel client, MessageProcessor mp) {
         _clientSocket = client;
         _processor = mp;
     }
 
     public void run() {
 
-        log("Connection from [" + _clientSocket.getRemoteSocketAddress() + "]");
+        log("Connection from [" + _clientSocket.socket().getRemoteSocketAddress() + "]");
+
+        DBConnection dbConnection;
 
         try {
-            createServerConnection();
+            dbConnection = createServerConnection();
         } catch (IOException e) {
             log("Error creating connection to server.  Shutting down connection to client", e);
 
@@ -68,7 +67,7 @@ public class MongoProxy implements Runnable {
         }
 
         try {
-            processMessages();
+            processMessages(dbConnection);
         }
         catch(MongoDBException me ) {
             log("Error processing messages  Shutting down.", me);
@@ -77,14 +76,10 @@ public class MongoProxy implements Runnable {
             log("Error processing messages  Shutting down.", me);
         }
 
-        shutdownServer();
+        dbConnection.shutdown();
         shutdownClient();
 
         log("MessageProxy thread ending.");
-    }
-
-    protected void shutdownServer() {
-        _dbConnection.shutdown();
     }
 
     protected void shutdownClient() {
@@ -95,18 +90,21 @@ public class MongoProxy implements Runnable {
         }
     }
     
-    protected void processMessages() throws MongoDBException {
+    protected void processMessages(DBConnection dbConnection) throws MongoDBException {
 
         try {
-            BufferedInputStream is = new BufferedInputStream(_clientSocket.getInputStream());
+            ByteBuffer readBuf = ByteBuffer.allocateDirect(1024 * 100);
+            readBuf.order(ByteOrder.LITTLE_ENDIAN);
 
             while(_running) {
 
-                DBMessage msg = DBMessage.readFromStream(is);
+                readBuf.clear();
+                DBMessage msg = DBMessage.readFromChannel(_clientSocket, readBuf);
 
                 processMessage(MessageProcessor.Direction.FromClient, msg);
 
-                _dbConnection.writeToServer(msg);
+                readBuf.flip();
+                dbConnection.writeToServer(readBuf);
             }
         }
         catch(IOException e) {
@@ -118,8 +116,8 @@ public class MongoProxy implements Runnable {
         _processor.process(_myID, count.getAndIncrement(), dir, msg);
     }
 
-    private void createServerConnection() throws IOException {
-        _dbConnection = new DBConnection(this, _clientSocket, _processor);
+    private DBConnection createServerConnection() throws IOException {
+        return new DBConnection(this, _clientSocket, _processor);
     }
 
     private void log(String s, Throwable e) {
@@ -133,6 +131,10 @@ public class MongoProxy implements Runnable {
         }
 
         System.out.println(sb);
+
+        if (e != null) {
+            e.printStackTrace();
+        }
     }
 
     private void log(String msg) {

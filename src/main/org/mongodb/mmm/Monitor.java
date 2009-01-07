@@ -20,18 +20,18 @@
 package org.mongodb.mmm;
 
 import org.mongodb.mmm.processor.MessageLogger;
+import org.mongodb.mmm.processor.NOOPProcessor;
 
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.InetSocketAddress;
 import java.io.IOException;
+import java.nio.channels.ServerSocketChannel;
+import java.nio.channels.SocketChannel;
 
 /**
  *
  */
 public class Monitor {
 
-    protected ServerSocket _listenSock;
     protected boolean _running=true;
 
     public Monitor() {
@@ -39,19 +39,20 @@ public class Monitor {
 
     public void listen(int port) throws IOException {
 
-        try {
-            _listenSock = new ServerSocket();
+        ServerSocketChannel listenSock = ServerSocketChannel.open();
 
-            _listenSock.bind(new InetSocketAddress(port));
+        try {
+            listenSock.socket().bind(new InetSocketAddress(port));
 
             System.out.println("MMM : Listening on " + port);
 
             while(_running) {
 
-                Socket s = _listenSock.accept();
+                SocketChannel s = listenSock.accept();
 
                 System.out.println("MMM: Received connection : " + s);
-                MongoProxy mp = new MongoProxy(s, new MessageLogger(false, System.out));
+//                MongoProxy mp = new MongoProxy(s, new MessageLogger(false, System.out));
+                MongoProxy mp = new MongoProxy(s, new NOOPProcessor());
 
                 Thread t = new Thread(mp);
 
@@ -59,7 +60,7 @@ public class Monitor {
             }
         }
         finally {
-            _listenSock.close();
+            listenSock.close();
         }
     }
 
