@@ -86,7 +86,7 @@ public class MongoProxy implements Runnable {
         try {
             _clientSocket.close();
         } catch (IOException e) {
-            e.printStackTrace();
+            // ignore for nowe.printStackTrace();
         }
     }
     
@@ -120,7 +120,7 @@ public class MongoProxy implements Runnable {
         return new DBConnection(this, _clientSocket, _processor);
     }
 
-    private void log(String s, Throwable e) {
+    public void log(String s, Throwable e) {
         StringBuffer sb = new StringBuffer();
         sb.append(_myID);
         sb.append(":").append(s);
@@ -131,13 +131,9 @@ public class MongoProxy implements Runnable {
         }
 
         System.out.println(sb);
-
-        if (e != null) {
-            e.printStackTrace();
-        }
     }
 
-    private void log(String msg) {
+    public  void log(String msg) {
         log(msg, null);
     }
 

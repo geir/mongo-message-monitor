@@ -52,7 +52,7 @@ public class Monitor {
                 System.out.println("MMM: Received connection : " + s);
                 MongoProxy mp = new MongoProxy(s, new MessageLogger(false, System.out));
 
-                Thread t = new Thread(mp);
+                Thread t = new Thread(mp, "Proxy:" + s.socket().getRemoteSocketAddress());
 
                 t.start();
             }

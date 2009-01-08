@@ -21,6 +21,7 @@ package org.mongodb.mmm;
 
 import org.mongodb.driver.impl.msg.DBMessage;
 import org.mongodb.driver.MongoDBException;
+import org.mongodb.driver.MongoDBIOException;
 import org.mongodb.mmm.processor.MessageProcessor;
 
 import java.net.InetSocketAddress;
@@ -51,14 +52,19 @@ public class DBConnection {
 
         _sr = new ServerReader(_clientSocketChannel, _dbSocketChannel);
 
-        _serverThread = new Thread(_sr);
+        _serverThread = new Thread(_sr, "DBServerReader:" + _clientSocketChannel.socket().getRemoteSocketAddress());
         _serverThread.start();
     }
 
     public void shutdown() {
         _sr.stopRunning();
 
-        // TODO close the socket
+        try {
+            _dbSocketChannel.close();
+        }
+        catch (IOException ioe) {
+            ioe.printStackTrace();
+        }
     }
 
     public void writeToServer(ByteBuffer buf) throws IOException{
@@ -78,6 +84,12 @@ public class DBConnection {
 
         public void stopRunning() {
             _running = false;
+            try {
+                _db.close();
+            }
+            catch(IOException ioe) {
+                //
+            }
         }
         
         public void run() {
@@ -100,14 +112,19 @@ public class DBConnection {
                     _client.write(buf);
                 }
             }
+            catch(MongoDBIOException e){
+                _myProxy.log("Caught exception in server read loop", e);
+            }
             catch(MongoDBException e){
-                e.printStackTrace();
+                _myProxy.log("Caught exception in server read loop", e);
             }
             catch(IOException e){
-                e.printStackTrace();
+                System.err.println("Caught exception in server read loop");
             }
 
             _running = false;
+
+            _myProxy.log("End of server thread");
         }
     }
 }
