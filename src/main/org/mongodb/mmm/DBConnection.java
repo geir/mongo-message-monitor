@@ -50,6 +50,8 @@ public class DBConnection {
 
         _dbSocketChannel = SocketChannel.open(new InetSocketAddress("127.0.0.1", 27020));
 
+        _dbSocketChannel.configureBlocking(true);
+        
         _sr = new ServerReader(_clientSocketChannel, _dbSocketChannel);
 
         _serverThread = new Thread(_sr, "DBServerReader:" + _clientSocketChannel.socket().getRemoteSocketAddress());

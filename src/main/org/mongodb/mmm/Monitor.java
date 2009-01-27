@@ -49,6 +49,8 @@ public class Monitor {
 
                 SocketChannel s = listenSock.accept();
 
+                s.configureBlocking(true);
+                
                 System.out.println("MMM: Received connection : " + s);
                 MongoProxy mp = new MongoProxy(s, new MessageLogger(false, System.out));
 
